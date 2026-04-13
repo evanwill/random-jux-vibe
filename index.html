@@ -246,7 +246,7 @@
 
   /** Fetch a batch of random File-namespace pages with imageinfo in one request */
   async function fetchRandomImages(limit) {
-    limit = limit || 30;
+    if (limit === undefined) limit = 30;
     const params = new URLSearchParams({
       action:              'query',
       generator:           'random',
@@ -294,17 +294,20 @@
 
   /** Pick two images, retrying API fetches as needed */
   async function pickTwo() {
-    var MAX_ATTEMPTS = 3;
+    const MAX_ATTEMPTS = 3;
     for (var attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       var pages = await fetchRandomImages(30);
       var valid = validImages(pages);
       if (valid.length >= 2) {
-        // Prefer a pair with similar aspect ratios
+        // Sort by aspect ratio, then check adjacent pairs (avoids O(n²) over full list)
+        valid.sort(function(a, b) {
+          var rA = a.imageinfo[0].width / (a.imageinfo[0].height || 1);
+          var rB = b.imageinfo[0].width / (b.imageinfo[0].height || 1);
+          return rA - rB;
+        });
         for (var i = 0; i < valid.length - 1; i++) {
-          for (var j = i + 1; j < valid.length; j++) {
-            if (comparable(valid[i].imageinfo[0], valid[j].imageinfo[0])) {
-              return [valid[i], valid[j]];
-            }
+          if (comparable(valid[i].imageinfo[0], valid[i + 1].imageinfo[0])) {
+            return [valid[i], valid[i + 1]];
           }
         }
         // Fall back to any two
@@ -329,7 +332,7 @@
     linkBefore.href = commonsPageUrl(pageA.title);
     linkAfter.href  = commonsPageUrl(pageB.title);
 
-    viewer.innerHTML = '';
+    while (viewer.firstChild) viewer.removeChild(viewer.firstChild);
 
     var el = document.createElement('before-after');
     el.setAttribute('before',       infoA.url);
@@ -347,7 +350,7 @@
   function closeModal() {
     modal.classList.remove('open');
     document.body.style.overflow = '';
-    viewer.innerHTML = '';
+    while (viewer.firstChild) viewer.removeChild(viewer.firstChild);
     btn.focus();
   }
 
