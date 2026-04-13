@@ -736,11 +736,11 @@
     while (viewer.firstChild) viewer.removeChild(viewer.firstChild);
 
     // Show a loading spinner while the images fetch and decode
-    var spinner = document.createElement('div');
+    const spinner = document.createElement('div');
     spinner.id = 'loading-spinner';
     viewer.appendChild(spinner);
 
-    var el = document.createElement('before-after');
+    const el = document.createElement('before-after');
     el.setAttribute('before',         infoA.url);
     el.setAttribute('after',          infoB.url);
     el.setAttribute('before-label',   pageLabel(pageA));
