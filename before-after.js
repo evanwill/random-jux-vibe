@@ -216,6 +216,35 @@
       height: 16px;
       display: block;
     }
+
+    .before-after-loading {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #1a1a1a;
+      transition: opacity 0.4s ease;
+    }
+
+    .before-after-loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .before-after-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: before-after-spin 0.8s linear infinite;
+    }
+
+    @keyframes before-after-spin {
+      to { transform: rotate(360deg); }
+    }
   `;
 
   class BeforeAfter extends HTMLElement {
@@ -226,6 +255,7 @@
       this.sliderPosition = 50;
       this.isDragging = false;
       this.imagesLoaded = { before: false, after: false };
+      this.loadingOverlay = null;
     }
 
     static get observedAttributes() {
@@ -296,6 +326,8 @@
       const style = document.createElement('style');
       style.textContent = CSS;
 
+      this.imagesLoaded = { before: false, after: false };
+
       this.container = document.createElement('div');
       this.container.className = this.isVertical ? 'before-after-container vertical' : 'before-after-container';
       this.container.setAttribute('role', 'group');
@@ -336,6 +368,16 @@
       this.shadowRoot.appendChild(style);
       this.shadowRoot.appendChild(this.container);
 
+      this.loadingOverlay = document.createElement('div');
+      this.loadingOverlay.className = 'before-after-loading';
+      this.loadingOverlay.setAttribute('aria-label', 'Loading images');
+      this.loadingOverlay.setAttribute('role', 'status');
+      this.loadingOverlay.setAttribute('aria-live', 'polite');
+      const spinner = document.createElement('div');
+      spinner.className = 'before-after-spinner';
+      this.loadingOverlay.appendChild(spinner);
+      this.container.appendChild(this.loadingOverlay);
+
       this.sliderPosition = this.startPosition;
       this.updateSliderPosition(this.sliderPosition);
     }
@@ -352,6 +394,12 @@
       img.addEventListener('load', () => {
         img.classList.add('loaded');
         this.imagesLoaded[type] = true;
+        this.checkAllLoaded();
+      });
+
+      img.addEventListener('error', () => {
+        this.imagesLoaded[type] = true;
+        this.checkAllLoaded();
       });
 
       container.appendChild(img);
@@ -372,6 +420,18 @@
       }
 
       return container;
+    }
+
+    checkAllLoaded() {
+      if (this.imagesLoaded.before && this.imagesLoaded.after && this.loadingOverlay) {
+        this.loadingOverlay.classList.add('hidden');
+        this.loadingOverlay.addEventListener('transitionend', () => {
+          if (this.loadingOverlay && this.loadingOverlay.parentNode) {
+            this.loadingOverlay.parentNode.removeChild(this.loadingOverlay);
+          }
+          this.loadingOverlay = null;
+        }, { once: true });
+      }
     }
 
     createSlider() {
