@@ -709,13 +709,17 @@
       var pages = await fetchRandomImages(30);
       var valid = validImages(pages);
       if (valid.length >= 2) {
-        // Collect all comparable pairs, then choose one randomly to avoid orientation bias
+        // Sort by aspect ratio, then choose a random comparable adjacent pair
+        valid.sort(function(a, b) {
+          var rA = a.imageinfo[0].width / (a.imageinfo[0].height || 1);
+          var rB = b.imageinfo[0].width / (b.imageinfo[0].height || 1);
+          return rA - rB;
+        });
+
         var comparablePairs = [];
         for (var i = 0; i < valid.length - 1; i++) {
-          for (var j = i + 1; j < valid.length; j++) {
-            if (comparable(valid[i].imageinfo[0], valid[j].imageinfo[0])) {
-              comparablePairs.push([valid[i], valid[j]]);
-            }
+          if (comparable(valid[i].imageinfo[0], valid[i + 1].imageinfo[0])) {
+            comparablePairs.push([valid[i], valid[i + 1]]);
           }
         }
         if (comparablePairs.length > 0) {
@@ -724,8 +728,7 @@
 
         // Fall back to any two random valid images
         var first = Math.floor(Math.random() * valid.length);
-        var second = first;
-        while (second === first) second = Math.floor(Math.random() * valid.length);
+        var second = (first + 1 + Math.floor(Math.random() * (valid.length - 1))) % valid.length;
         return [valid[first], valid[second]];
       }
     }
