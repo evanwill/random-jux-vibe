@@ -667,9 +667,8 @@
 
   /** Pick a human-readable label for a file page */
   function stripHtml(value) {
-    const temp = document.createElement('div');
-    temp.innerHTML = value;
-    return (temp.textContent || temp.innerText || '').trim();
+    const parsed = new DOMParser().parseFromString(value, 'text/html');
+    return (parsed.body && parsed.body.textContent || '').trim();
   }
 
   function pageLabel(page) {
