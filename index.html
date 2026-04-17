@@ -667,8 +667,7 @@
 
   /** Pick a human-readable label for a file page */
   function stripHtml(value) {
-    const parsed = new DOMParser().parseFromString(value, 'text/html');
-    return (parsed.body && parsed.body.textContent || '').trim();
+    return String(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
   function pageLabel(page) {
