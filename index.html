@@ -728,7 +728,8 @@
 
         // Fall back to any two random valid images
         var first = Math.floor(Math.random() * valid.length);
-        var second = (first + 1 + Math.floor(Math.random() * (valid.length - 1))) % valid.length;
+        var second = Math.floor(Math.random() * (valid.length - 1));
+        if (second >= first) second++;
         return [valid[first], valid[second]];
       }
     }
