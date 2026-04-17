@@ -666,13 +666,22 @@
   }
 
   /** Pick a human-readable label for a file page */
+  function stripHtml(value) {
+    const temp = document.createElement('div');
+    temp.innerHTML = value;
+    return (temp.textContent || temp.innerText || '').trim();
+  }
+
   function pageLabel(page) {
     const meta = page.imageinfo &&
                  page.imageinfo[0] &&
                  page.imageinfo[0].extmetadata &&
                  page.imageinfo[0].extmetadata.ObjectName &&
                  page.imageinfo[0].extmetadata.ObjectName.value;
-    if (meta) return meta;
+    if (meta) {
+      const cleanMeta = stripHtml(meta);
+      if (cleanMeta) return cleanMeta;
+    }
     return page.title.replace(/^File:/, '').replace(/\.[^.]+$/, '').replace(/_/g, ' ');
   }
 
