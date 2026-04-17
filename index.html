@@ -709,19 +709,24 @@
       var pages = await fetchRandomImages(30);
       var valid = validImages(pages);
       if (valid.length >= 2) {
-        // Sort by aspect ratio, then check adjacent pairs (avoids O(n²) over full list)
-        valid.sort(function(a, b) {
-          var rA = a.imageinfo[0].width / (a.imageinfo[0].height || 1);
-          var rB = b.imageinfo[0].width / (b.imageinfo[0].height || 1);
-          return rA - rB;
-        });
+        // Collect all comparable pairs, then choose one randomly to avoid orientation bias
+        var comparablePairs = [];
         for (var i = 0; i < valid.length - 1; i++) {
-          if (comparable(valid[i].imageinfo[0], valid[i + 1].imageinfo[0])) {
-            return [valid[i], valid[i + 1]];
+          for (var j = i + 1; j < valid.length; j++) {
+            if (comparable(valid[i].imageinfo[0], valid[j].imageinfo[0])) {
+              comparablePairs.push([valid[i], valid[j]]);
+            }
           }
         }
-        // Fall back to any two
-        return [valid[0], valid[1]];
+        if (comparablePairs.length > 0) {
+          return comparablePairs[Math.floor(Math.random() * comparablePairs.length)];
+        }
+
+        // Fall back to any two random valid images
+        var first = Math.floor(Math.random() * valid.length);
+        var second = first;
+        while (second === first) second = Math.floor(Math.random() * valid.length);
+        return [valid[first], valid[second]];
       }
     }
     throw new Error('Could not find two suitable images. Please try again.');
